@@ -32,6 +32,7 @@ from fsl.kmeans import kmeans, soft_kmeans, bayes_kmeans
 from fsl.distance_based import distance_based_classifier
 
 def main():
+    print("starting train file ...")
     global args, best_prec1
     best_prec1 = 0
     args = configuration.parser_args()
