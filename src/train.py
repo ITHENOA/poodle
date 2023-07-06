@@ -32,7 +32,7 @@ from fsl.kmeans import kmeans, soft_kmeans, bayes_kmeans
 from fsl.distance_based import distance_based_classifier
 
 def main():
-    print("starting train file ...")
+    print("---- starting train file ...")
     global args, best_prec1
     best_prec1 = 0
     args = configuration.parser_args()
@@ -51,22 +51,27 @@ def main():
     cudnn.deterministic = True
     # create model
     log.info("=> creating model '{}'".format(args.arch))
+    print("---- creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch](num_classes=args.num_classes, remove_linear=args.do_meta_train)
 
     log.info('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
+    print('---- Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
 
     model = torch.nn.DataParallel(model).cuda()
 
     # define loss function (criterion) and optimizer
     if args.label_smooth > 0:
+        print("---- args.label_smooth > 0")
         criterion = SmoothCrossEntropy(epsilon=args.label_smooth).cuda()
 
     else:
+        print("---- args.label_smooth !> 0")
         criterion = nn.CrossEntropyLoss().cuda()
 
     optimizer = get_optimizer(model)
 
     if args.pretrain:
+        print("---- args.pretrain")
         pretrain = args.pretrain + '/checkpoint.pth.tar'
         if os.path.isfile(pretrain):
             log.info("=> loading pretrained weight '{}'".format(pretrain))
@@ -84,6 +89,7 @@ def main():
         args.resume = args.save_path + '/checkpoint.pth.tar'
 
     if args.resume:
+        print("---- args.resume")
         if os.path.isfile(args.resume):
             print("=> loading checkpoint '{}'".format(args.resume))
             log.info("=> loading checkpoint '{}'".format(args.resume))
@@ -96,22 +102,27 @@ def main():
             log.info("=> loaded checkpoint '{}' (epoch {})"
                      .format(args.resume, checkpoint['epoch']))
         else:
+            print("---- not args.resume")
             log.info('[Attention]: Do not find checkpoint {}'.format(args.resume))
 
     # Data loading code
     if args.evaluate:
+        print("---- args.evaluate")
         do_extract_and_evaluate(model, log)
         return
 
     args.enlarge = False
     if args.do_meta_train:
+        print("---- args.do_meta_train")
         sample_info = [args.meta_train_iter, args.meta_train_way, args.meta_train_shot, args.meta_train_query]
         train_loader = get_dataloader('train', not args.disable_train_augment, sample=sample_info)
     else:
+        print("---- not args.do_meta_train")
         train_loader = get_dataloader('train', not args.disable_train_augment, shuffle=True)
 
     sample_info = [args.meta_val_iter, args.meta_val_way, args.meta_val_shot, args.meta_val_query]
     val_loader = get_dataloader('val', False, sample=sample_info)
+    print(f"sample_info  = {sample_info}")
 
     scheduler = get_scheduler(len(train_loader), optimizer)
     tqdm_loop = warp_tqdm(list(range(args.start_epoch, args.epochs)))
@@ -195,6 +206,7 @@ def main():
     do_extract_and_evaluate(model, log)
 
 def metric_prediction(gallery, query, train_label, metric_type):
+    print("---- metric_prediction")
     gallery = gallery.view(gallery.shape[0], -1)
     query = query.view(query.shape[0], -1)
     distance = get_metric(metric_type)(gallery, query)
@@ -204,6 +216,7 @@ def metric_prediction(gallery, query, train_label, metric_type):
     return predict
 
 def meta_val(test_loader, model, train_mean=None):
+    print("---- meta_val")
     top1 = AverageMeter()
     model.eval()
 
@@ -228,6 +241,7 @@ def meta_val(test_loader, model, train_mean=None):
     return top1.avg
 
 def train_distil(train_loader, t_model, s_model, criterion, optimizer, epoch, scheduler, log):
+    print("---- train_distil")
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -295,6 +309,7 @@ def train_distil(train_loader, t_model, s_model, criterion, optimizer, epoch, sc
                 data_time=data_time, loss=losses, top1=top1, top5=top5))
 
 def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
+    print("---- train")
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -374,7 +389,8 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
                 epoch, i, len(train_loader), batch_time=batch_time,
                 data_time=data_time, loss=losses, top1=top1, top5=top5))
 
-def get_metric(metric_type):
+def get_metric(metric_type):  
+    print("---- get_metric")
     METRICS = {
         'cosine': lambda gallery, query: 1. - F.cosine_similarity(query[:, None, :], gallery[None, :, :], dim=2),
         'euclidean': lambda gallery, query: ((query[:, None, :] - gallery[None, :, :]) ** 2).sum(2),
@@ -389,6 +405,7 @@ def get_scheduler(batches, optimiter):
     :param batches: the number of iterations in each epochs
     :return: scheduler
     """
+    print("---- get_scheduler")
     SCHEDULER = {'step': StepLR(optimiter, args.lr_stepsize, args.lr_gamma),
                  'multi_step': MultiStepLR(optimiter, milestones=args.scheduler_milestones,
                                            gamma=args.lr_gamma),
@@ -396,12 +413,14 @@ def get_scheduler(batches, optimiter):
     return SCHEDULER[args.scheduler]
 
 def get_optimizer(module):
+    print("---- get_optimizer")
     OPTIMIZER = {'SGD': torch.optim.SGD(module.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.weight_decay,
                                         nesterov=args.nesterov),
                  'Adam': torch.optim.Adam(module.parameters(), lr=args.lr, weight_decay=args.weight_decay)}
     return OPTIMIZER[args.optimizer]
 
 def get_dataloader(split, aug=False, shuffle=True, out_name=False, sample=None):
+    print("---- get_dataloader")
 
     # sample: iter, way, shot, query
     if aug:
@@ -419,6 +438,7 @@ def get_dataloader(split, aug=False, shuffle=True, out_name=False, sample=None):
     return loader
 
 def warp_tqdm(data_loader):
+    print("---- warp_tqdm")
     if args.disable_tqdm:
         tqdm_loader = data_loader
     else:
@@ -426,6 +446,7 @@ def warp_tqdm(data_loader):
     return tqdm_loader
 
 def extract_feature(train_loader, val_loader, model, save_path, tag='last', enlarge=True):
+    print("---- extract_feature")
     # return out mean, fcout mean, out feature, fcout features
     save_dir = '{}/{}/{}'.format(save_path, tag, enlarge)
     if os.path.isfile(save_dir + '/output.plk'):
@@ -455,6 +476,7 @@ def extract_feature(train_loader, val_loader, model, save_path, tag='last', enla
         return all_info
     
 def meta_evaluate(data, shot, train_feature, args):
+    print("---- meta_evaluate")
     super_tasks = []
     results = {}
     
@@ -480,6 +502,7 @@ def meta_evaluate(data, shot, train_feature, args):
     return results
 
 def do_extract_and_evaluate(model, log):
+    print("---- do_extract_and_evaluate")
     args.do_ssl = False
     tags = 'best'
     train_loader = get_dataloader('train', aug=False, shuffle=False, out_name=False)
