@@ -423,7 +423,7 @@ def get_optimizer(module):
 
 def get_dataloader(split, aug=False, shuffle=True, out_name=False, sample=None):
     print("---- train/ get_dataloader")
-    print("---- train/ image size = {args.img_size}")
+    print(f"---- train/ image size = {args.img_size}")
     # sample: iter, way, shot, query
     if aug:
         print("---- train/ with_augment")
@@ -435,10 +435,10 @@ def get_dataloader(split, aug=False, shuffle=True, out_name=False, sample=None):
     if sample is not None:
         print("---- train/ sample = [iter, way, shot, query] = {sample}")
         sampler = datasets.CategoriesSampler(sets.labels, *sample)
-        print("---- train/ sampler : {sampler}")
+        print(f"---- train/ sampler : {sampler}")
         loader = torch.utils.data.DataLoader(sets, batch_sampler=sampler,
                                              num_workers=args.workers, pin_memory=True)
-        print("---- train/ loader : {loader}")
+        print(f"---- train/ loader : {loader}")
     else:
         print("---- train/ sample = None")
         loader = torch.utils.data.DataLoader(sets, batch_size=args.batch_size, shuffle=shuffle,
