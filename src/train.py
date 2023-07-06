@@ -32,7 +32,7 @@ from fsl.kmeans import kmeans, soft_kmeans, bayes_kmeans
 from fsl.distance_based import distance_based_classifier
 
 def main():
-    print("---- starting train file ...")
+    print("---- train/ starting train file ...")
     global args, best_prec1
     best_prec1 = 0
     args = configuration.parser_args()
@@ -51,27 +51,27 @@ def main():
     cudnn.deterministic = True
     # create model
     log.info("=> creating model '{}'".format(args.arch))
-    print("---- creating model '{}'".format(args.arch))
+    print("---- train/ creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch](num_classes=args.num_classes, remove_linear=args.do_meta_train)
 
     log.info('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
-    print('---- Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
+    print('---- train/ Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
 
     model = torch.nn.DataParallel(model).cuda()
 
     # define loss function (criterion) and optimizer
     if args.label_smooth > 0:
-        print("---- args.label_smooth > 0")
+        print("---- train/ args.label_smooth > 0")
         criterion = SmoothCrossEntropy(epsilon=args.label_smooth).cuda()
 
     else:
-        print("---- args.label_smooth !> 0")
+        print("---- train/ args.label_smooth !> 0")
         criterion = nn.CrossEntropyLoss().cuda()
 
     optimizer = get_optimizer(model)
 
     if args.pretrain:
-        print("---- args.pretrain")
+        print("---- train/ args.pretrain")
         pretrain = args.pretrain + '/checkpoint.pth.tar'
         if os.path.isfile(pretrain):
             log.info("=> loading pretrained weight '{}'".format(pretrain))
@@ -82,6 +82,7 @@ def main():
             model_dict.update(params)
             model.load_state_dict(model_dict)
         else:
+            print("---- train/ not args.pretrain")
             log.info('[Attention]: Do not find pretrained model {}'.format(pretrain))
 
     # resume from an exist checkpoint
@@ -89,7 +90,7 @@ def main():
         args.resume = args.save_path + '/checkpoint.pth.tar'
 
     if args.resume:
-        print("---- args.resume")
+        print("---- train/ args.resume")
         if os.path.isfile(args.resume):
             print("=> loading checkpoint '{}'".format(args.resume))
             log.info("=> loading checkpoint '{}'".format(args.resume))
@@ -102,27 +103,28 @@ def main():
             log.info("=> loaded checkpoint '{}' (epoch {})"
                      .format(args.resume, checkpoint['epoch']))
         else:
-            print("---- not args.resume")
+            print("---- train/ not args.resume")
             log.info('[Attention]: Do not find checkpoint {}'.format(args.resume))
 
     # Data loading code
     if args.evaluate:
-        print("---- args.evaluate")
+        print("---- train/ args.evaluate")
         do_extract_and_evaluate(model, log)
         return
 
     args.enlarge = False
     if args.do_meta_train:
-        print("---- args.do_meta_train")
+        print("---- train/ args.do_meta_train")
         sample_info = [args.meta_train_iter, args.meta_train_way, args.meta_train_shot, args.meta_train_query]
+        print(f"---- train/ sample_info train = {sample_info}")
         train_loader = get_dataloader('train', not args.disable_train_augment, sample=sample_info)
     else:
-        print("---- not args.do_meta_train")
+        print("---- train/ not args.do_meta_train")
         train_loader = get_dataloader('train', not args.disable_train_augment, shuffle=True)
 
     sample_info = [args.meta_val_iter, args.meta_val_way, args.meta_val_shot, args.meta_val_query]
     val_loader = get_dataloader('val', False, sample=sample_info)
-    print(f"sample_info  = {sample_info}")
+    print(f"---- train/ sample_info val = {sample_info}")
 
     scheduler = get_scheduler(len(train_loader), optimizer)
     tqdm_loop = warp_tqdm(list(range(args.start_epoch, args.epochs)))
@@ -206,7 +208,7 @@ def main():
     do_extract_and_evaluate(model, log)
 
 def metric_prediction(gallery, query, train_label, metric_type):
-    print("---- metric_prediction")
+    print("---- train/ metric_prediction")
     gallery = gallery.view(gallery.shape[0], -1)
     query = query.view(query.shape[0], -1)
     distance = get_metric(metric_type)(gallery, query)
@@ -216,7 +218,7 @@ def metric_prediction(gallery, query, train_label, metric_type):
     return predict
 
 def meta_val(test_loader, model, train_mean=None):
-    print("---- meta_val")
+    print("---- train/ meta_val")
     top1 = AverageMeter()
     model.eval()
 
@@ -241,7 +243,7 @@ def meta_val(test_loader, model, train_mean=None):
     return top1.avg
 
 def train_distil(train_loader, t_model, s_model, criterion, optimizer, epoch, scheduler, log):
-    print("---- train_distil")
+    print("---- train/ train_distil")
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -309,7 +311,7 @@ def train_distil(train_loader, t_model, s_model, criterion, optimizer, epoch, sc
                 data_time=data_time, loss=losses, top1=top1, top5=top5))
 
 def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
-    print("---- train")
+    print("---- train/ train")
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -390,7 +392,7 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
                 data_time=data_time, loss=losses, top1=top1, top5=top5))
 
 def get_metric(metric_type):  
-    print("---- get_metric")
+    print("---- train/ get_metric")
     METRICS = {
         'cosine': lambda gallery, query: 1. - F.cosine_similarity(query[:, None, :], gallery[None, :, :], dim=2),
         'euclidean': lambda gallery, query: ((query[:, None, :] - gallery[None, :, :]) ** 2).sum(2),
@@ -405,7 +407,7 @@ def get_scheduler(batches, optimiter):
     :param batches: the number of iterations in each epochs
     :return: scheduler
     """
-    print("---- get_scheduler")
+    print("---- train/ get_scheduler")
     SCHEDULER = {'step': StepLR(optimiter, args.lr_stepsize, args.lr_gamma),
                  'multi_step': MultiStepLR(optimiter, milestones=args.scheduler_milestones,
                                            gamma=args.lr_gamma),
@@ -413,32 +415,38 @@ def get_scheduler(batches, optimiter):
     return SCHEDULER[args.scheduler]
 
 def get_optimizer(module):
-    print("---- get_optimizer")
+    print("---- train/ get_optimizer")
     OPTIMIZER = {'SGD': torch.optim.SGD(module.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.weight_decay,
                                         nesterov=args.nesterov),
                  'Adam': torch.optim.Adam(module.parameters(), lr=args.lr, weight_decay=args.weight_decay)}
     return OPTIMIZER[args.optimizer]
 
 def get_dataloader(split, aug=False, shuffle=True, out_name=False, sample=None):
-    print("---- get_dataloader")
-
+    print("---- train/ get_dataloader")
+    print("---- train/ image size = {args.img_size}")
     # sample: iter, way, shot, query
     if aug:
+        print("---- train/ with_augment")
         transform = datasets.with_augment(args.img_size, disable_random_resize=args.disable_random_resize, jitter=args.jitter)
     else:
+        print("---- train/ without_augment")
         transform = datasets.without_augment(args.img_size, enlarge=args.enlarge)
     sets = datasets.DatasetFolder(args.data, args.split_dir, split, transform, out_name=out_name)
     if sample is not None:
+        print("---- train/ sample = [iter, way, shot, query] = {sample}")
         sampler = datasets.CategoriesSampler(sets.labels, *sample)
+        print("---- train/ sampler : {sampler}")
         loader = torch.utils.data.DataLoader(sets, batch_sampler=sampler,
                                              num_workers=args.workers, pin_memory=True)
+        print("---- train/ loader : {loader}")
     else:
+        print("---- train/ sample = None")
         loader = torch.utils.data.DataLoader(sets, batch_size=args.batch_size, shuffle=shuffle,
                                              num_workers=args.workers, pin_memory=True, collate_fn=ssl_collate_fn if args.do_ssl else None)
+        print("---- train/ loader : {loader}")
     return loader
 
 def warp_tqdm(data_loader):
-    print("---- warp_tqdm")
     if args.disable_tqdm:
         tqdm_loader = data_loader
     else:
@@ -446,7 +454,7 @@ def warp_tqdm(data_loader):
     return tqdm_loader
 
 def extract_feature(train_loader, val_loader, model, save_path, tag='last', enlarge=True):
-    print("---- extract_feature")
+    print("---- train/ extract_feature")
     # return out mean, fcout mean, out feature, fcout features
     save_dir = '{}/{}/{}'.format(save_path, tag, enlarge)
     if os.path.isfile(save_dir + '/output.plk'):
@@ -476,7 +484,7 @@ def extract_feature(train_loader, val_loader, model, save_path, tag='last', enla
         return all_info
     
 def meta_evaluate(data, shot, train_feature, args):
-    print("---- meta_evaluate")
+    print("---- train/ meta_evaluate")
     super_tasks = []
     results = {}
     
@@ -489,20 +497,27 @@ def meta_evaluate(data, shot, train_feature, args):
     super_train_label = np.stack([task[2] for task in super_tasks], 0)
     super_test_label = np.stack([task[3] for task in super_tasks], 0)
 
-    accs = tim(super_train_data, super_test_data, super_train_label, super_test_label, shot, args=args)
-    results["tim"] = accs
+    # accs = tim(super_train_data, super_test_data, super_train_label, super_test_label, shot, args=args)
+    # results["tim"] = accs
+
+    print("---- train/ POODLE_B")
     accs = poodle(super_train_data, super_test_data, super_train_label, super_test_label, shot, train_feature=train_feature, transductive=False, args=args)
     results["poodle_B"] = accs
+    print(accs)
+
+    print("---- train/ POODLE_R")
     accs = poodle(super_train_data, super_test_data, super_train_label, super_test_label, shot, train_feature=None, transductive=False, args=args)
     results["poodle_R"] = accs
-    accs = distance_based_classifier(super_train_data, super_test_data, super_train_label, super_test_label, shot, args=args)
-    results["cosine"] = accs
+    print(accs)
+
+    # accs = distance_based_classifier(super_train_data, super_test_data, super_train_label, super_test_label, shot, args=args)
+    # results["cosine"] = accs
 
     results = {k: compute_confidence_interval(v) for k, v in results.items()}
     return results
 
 def do_extract_and_evaluate(model, log):
-    print("---- do_extract_and_evaluate")
+    print("---- train/ do_extract_and_evaluate")
     args.do_ssl = False
     tags = 'best'
     train_loader = get_dataloader('train', aug=False, shuffle=False, out_name=False)
@@ -511,6 +526,7 @@ def do_extract_and_evaluate(model, log):
     ## With the best model trained on source dataset
     load_checkpoint(args, model, 'best')
     train_feature, out_dict = extract_feature(train_loader, val_loader, model, '{}/{}/{}'.format(args.save_path, tags, args.enlarge), tags)
+    print("---- train/ train_feature: {train_feature.shape}, out_dict: {out_dict.shape}")
     
     results = meta_evaluate(out_dict, 1, train_feature, args)
     print_dict(results, 'Best 1-shot')
