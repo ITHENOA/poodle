@@ -15,7 +15,6 @@ if __name__ == '__main__':
     data_path = args.data
 
     folder_list = [f for f in listdir(data_path) if isdir(join(data_path, f))]
-    folder_list = [folder.lower() for folder in folder_list]
     folder_list.sort()
     label_dict = dict(zip(folder_list,range(0,len(folder_list))))
 
