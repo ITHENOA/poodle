@@ -294,7 +294,7 @@ def train_distil(train_loader, t_model, s_model, criterion, optimizer, epoch, sc
         top1.update(prec1[0], input.size(0))
         top5.update(prec5[0], input.size(0))
         if not args.disable_tqdm:
-            tqdm_train_loader.set_description('Acc {:.2f}'.format(top1.avg))
+            tqdm_train_loader.set_description('[des] [{0}] Acc {:.2f}'.format(epoch,top1.avg))
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -375,7 +375,7 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
         top1.update(prec1[0], input.size(0))
         top5.update(prec5[0], input.size(0))
         if not args.disable_tqdm:
-            tqdm_train_loader.set_description('Acc {:.2f}'.format(top1.avg))
+            tqdm_train_loader.set_description('[train] [{0}] Acc {:.2f}'.format(epoch,top1.avg))
 
         # measure elapsed time
         batch_time.update(time.time() - end)
