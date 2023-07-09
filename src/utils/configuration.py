@@ -22,7 +22,7 @@ def parser_args():
     parser.add_argument('--disable-random-resize', action='store_true',
                         help='disable random resizing')
     parser.add_argument('--jitter', default=True, type=bool, help='Image jitter added')
-    parser.add_argument('--img-size', default=84, type=int, help='Resized images for training and evaluation')
+    parser.add_argument('--img-size', default=64, type=int, help='Resized images for training and evaluation')
     parser.add_argument('--enlarge', default=True, type=bool, help='enlarge the image size then center crop')
     ### network setting
     parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet18',

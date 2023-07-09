@@ -43,10 +43,7 @@ class CategoriesSampler(Sampler):
 
 def sample_case(args, ld_dict, shot):
     # Sample meta task
-    print("---- sampler/ sampler is here")
-    print(ld_dict.keys())
     print(list(ld_dict.keys()))
-    print(args.meta_val_way)
     sample_class = random.sample(list(ld_dict.keys()), args.meta_val_way)
     train_input = []
     test_input = []

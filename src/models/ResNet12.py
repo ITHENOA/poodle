@@ -61,6 +61,8 @@ class BasicBlock(nn.Module):
             if self.drop_block == True:
                 feat_size = out.size()[2]
                 keep_rate = max(1.0 - self.drop_rate / (20*2000) * (self.num_batches_tracked), 1.0 - self.drop_rate)
+                print(f"feat_size = {feat_size}")
+                print(f"block_size = {self.block_size}")
                 gamma = (1 - keep_rate) / self.block_size**2 * feat_size**2 / (feat_size - self.block_size + 1)**2
                 out = self.DropBlock(out, gamma=gamma)
             else:
@@ -71,7 +73,7 @@ class BasicBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block=BasicBlock, keep_prob=1.0, avg_pool=True, drop_rate=0.1, dropblock_size=5, remove_linear=False, num_classes=1000):
+    def __init__(self, block=BasicBlock, keep_prob=1.0, avg_pool=True, drop_rate=0.1, dropblock_size=4, remove_linear=False, num_classes=1000):
         self.inplanes = 3
         super(ResNet, self).__init__()
 
