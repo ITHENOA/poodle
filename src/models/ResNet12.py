@@ -61,8 +61,6 @@ class BasicBlock(nn.Module):
             if self.drop_block == True:
                 feat_size = out.size()[2]
                 keep_rate = max(1.0 - self.drop_rate / (20*2000) * (self.num_batches_tracked), 1.0 - self.drop_rate)
-                print(f"feat_size = {feat_size}")
-                print(f"block_size = {self.block_size}")
                 gamma = (1 - keep_rate) / self.block_size**2 * feat_size**2 / (feat_size - self.block_size + 1)**2
                 out = self.DropBlock(out, gamma=gamma)
             else:

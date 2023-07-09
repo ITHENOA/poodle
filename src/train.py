@@ -319,7 +319,6 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
     top5 = AverageMeter()
     
     # switch to train mode
-    print("322 switch to train mode")
     model.train()
     
     end = time.time()
@@ -329,7 +328,6 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
         if args.scheduler == 'cosine':
             scheduler.step(epoch * len(train_loader) + i)
         # measure data loading time
-        print("332 measure data loading time")
         data_time.update(time.time() - end)
 
         if args.do_ssl:
@@ -352,15 +350,11 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
             # adjust lambda to exactly match pixel ratio
             lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (input.size()[-1] * input.size()[-2]))
             # compute output
-            print("355 compute output")
             output = model(input)
             loss = criterion(output, target_a) * lam + criterion(output, target_b) * (1. - lam)
         else:
-            print("359 compute output else")
             output, rot_output = model(input)
-            print("1")
             loss = criterion(output, target) 
-            print("1")
             if args.do_ssl:
                 loss += criterion(rot_output, rot_target)
             if args.do_meta_train:
@@ -371,11 +365,9 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
                 output = -get_metric(args.meta_train_metric)(shot_proto, query_proto)
         
         # measure accuracy and record loss
-        print("374 measure accuracy and record loss")
         losses.update(loss.item(), input.size(0))
 
         # compute gradient and do SGD step
-        print("378 compute gradient and do SGD step")
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -386,7 +378,6 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
             tqdm_train_loader.set_description('[train] [{}] Acc {:.2f}'.format(epoch,top1.avg))
 
         # measure elapsed time
-        print("389 measure elapsed time")
         batch_time.update(time.time() - end)
         end = time.time()
 
