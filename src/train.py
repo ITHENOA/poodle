@@ -443,14 +443,14 @@ def get_dataloader(split, aug=False, shuffle=True, out_name=False, sample=None):
         print("---- train453/ loader : {loader}")
     return loader
 
-def other_dataloader(split, data aug=False, shuffle=True, out_name=False, sample=None):
-    print("---- train434/ other_dataloader")
+def other_dataloader(split, data_dir, split_dir, aug=False, shuffle=True, out_name=False, sample=None):
+    print("---- train447/ other_dataloader")
     # sample: iter, way, shot, query
     if aug:
         transform = datasets.with_augment(args.img_size, disable_random_resize=args.disable_random_resize, jitter=args.jitter)
     else:
         transform = datasets.without_augment(args.img_size, enlarge=args.enlarge)
-    sets = datasets.DatasetFolder(args.data, args.split_dir, split, transform, out_name=out_name)
+    sets = datasets.DatasetFolder(data_dir, split_dir, split, transform, out_name=out_name)
     if sample is not None:
         sampler = datasets.CategoriesSampler(sets.labels, *sample)
         loader = torch.utils.data.DataLoader(sets, batch_sampler=sampler,
@@ -536,16 +536,28 @@ def do_extract_and_evaluate(model, log):
     load_checkpoint(args, model, 'best')
     train_feature, out_dict = extract_feature(train_loader, val_loader, model, '{}/{}/{}'.format(args.save_path, tags, args.enlarge), tags)
     
-    # other_tag='other'
-    # other_train_loader = get_dataloader('train', aug=False, shuffle=False, out_name=False)
-    # other_val_loader = get_dataloader('test', aug=False, shuffle=False, out_name=False)
-    # other_feature, other_outdict = extract_feature(other_train_loader, other_val_loader, model, '{}/{}/{}'.format(args.save_path, other_tag, args.enlarge), other_tag)
-
     results = meta_evaluate(out_dict, 1, train_feature, args)
     print_dict(results, 'Best 1-shot')
 
     results = meta_evaluate(out_dict, 5, train_feature, args)
     print_dict(results, 'Best 5-shot')
+    
+    
+    other_data_dir = "./data/painting"
+    other_split_dir = "./data/split/painting"
+    other_tag='other'
+    other_train_loader = other_dataloader('train', other_data_dir, other_split_dir, aug=False, shuffle=False, out_name=False)
+    other_val_loader = other_dataloader('test', other_data_dir, other_split_dir, aug=False, shuffle=False, out_name=False)
+    other_feature, other_outdict = extract_feature(other_train_loader, other_val_loader, model, '{}/{}/{}'.format(args.save_path, other_tag, args.enlarge), other_tag)
+    
+    other_train_feature, other_out_dict = extract_feature(other_train_loader, other_val_loader, model, '{}/{}/{}'.format(args.save_path, tags, args.enlarge), tags)
+
+    results = meta_evaluate(other_out_dict, 1, other_train_feature, args)
+    print_dict(results, 'other 1-shot')
+
+    results = meta_evaluate(other_out_dict, 5, other_train_feature, args)
+    print_dict(results, 'other 5-shot')
+
 
 if __name__ == '__main__':
     main()
