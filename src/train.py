@@ -501,12 +501,10 @@ def meta_evaluate(data, shot, train_feature, args):
     print("---- train/ POODLE_B")
     accs = poodle(super_train_data, super_test_data, super_train_label, super_test_label, shot, train_feature=train_feature, transductive=False, args=args)
     results["poodle_B"] = accs
-    print(accs)
 
     print("---- train/ POODLE_R")
     accs = poodle(super_train_data, super_test_data, super_train_label, super_test_label, shot, train_feature=None, transductive=False, args=args)
     results["poodle_R"] = accs
-    print(accs)
 
     # accs = distance_based_classifier(super_train_data, super_test_data, super_train_label, super_test_label, shot, args=args)
     # results["cosine"] = accs
@@ -524,7 +522,6 @@ def do_extract_and_evaluate(model, log):
     ## With the best model trained on source dataset
     load_checkpoint(args, model, 'best')
     train_feature, out_dict = extract_feature(train_loader, val_loader, model, '{}/{}/{}'.format(args.save_path, tags, args.enlarge), tags)
-    print(f"---- train536/ train_feature: {train_feature.shape}, out_dict: {out_dict.shape}")
     
     results = meta_evaluate(out_dict, 1, train_feature, args)
     print_dict(results, 'Best 1-shot')
