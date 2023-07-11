@@ -423,7 +423,6 @@ def get_optimizer(module):
 
 def get_dataloader(split, aug=False, shuffle=True, out_name=False, sample=None):
     print("---- train434/ get_dataloader")
-    print(f"---- train435/ image size = {args.img_size}")
     # sample: iter, way, shot, query
     if aug:
         print("---- train438/ with_augment")
@@ -442,6 +441,23 @@ def get_dataloader(split, aug=False, shuffle=True, out_name=False, sample=None):
         loader = torch.utils.data.DataLoader(sets, batch_size=args.batch_size, shuffle=shuffle,
                                              num_workers=args.workers, pin_memory=True, collate_fn=ssl_collate_fn if args.do_ssl else None)
         print("---- train453/ loader : {loader}")
+    return loader
+
+def other_dataloader(split, data aug=False, shuffle=True, out_name=False, sample=None):
+    print("---- train434/ other_dataloader")
+    # sample: iter, way, shot, query
+    if aug:
+        transform = datasets.with_augment(args.img_size, disable_random_resize=args.disable_random_resize, jitter=args.jitter)
+    else:
+        transform = datasets.without_augment(args.img_size, enlarge=args.enlarge)
+    sets = datasets.DatasetFolder(args.data, args.split_dir, split, transform, out_name=out_name)
+    if sample is not None:
+        sampler = datasets.CategoriesSampler(sets.labels, *sample)
+        loader = torch.utils.data.DataLoader(sets, batch_sampler=sampler,
+                                             num_workers=args.workers, pin_memory=True)
+    else:
+        loader = torch.utils.data.DataLoader(sets, batch_size=args.batch_size, shuffle=shuffle,
+                                             num_workers=args.workers, pin_memory=True, collate_fn=ssl_collate_fn if args.do_ssl else None)
     return loader
 
 def warp_tqdm(data_loader):
@@ -498,11 +514,9 @@ def meta_evaluate(data, shot, train_feature, args):
     # accs = tim(super_train_data, super_test_data, super_train_label, super_test_label, shot, args=args)
     # results["tim"] = accs
 
-    print("---- train/ POODLE_B")
     accs = poodle(super_train_data, super_test_data, super_train_label, super_test_label, shot, train_feature=train_feature, transductive=False, args=args)
     results["poodle_B"] = accs
 
-    print("---- train/ POODLE_R")
     accs = poodle(super_train_data, super_test_data, super_train_label, super_test_label, shot, train_feature=None, transductive=False, args=args)
     results["poodle_R"] = accs
 
@@ -518,11 +532,15 @@ def do_extract_and_evaluate(model, log):
     tags = 'best'
     train_loader = get_dataloader('train', aug=False, shuffle=False, out_name=False)
     val_loader = get_dataloader('test', aug=False, shuffle=False, out_name=False)
-
     ## With the best model trained on source dataset
     load_checkpoint(args, model, 'best')
     train_feature, out_dict = extract_feature(train_loader, val_loader, model, '{}/{}/{}'.format(args.save_path, tags, args.enlarge), tags)
     
+    # other_tag='other'
+    # other_train_loader = get_dataloader('train', aug=False, shuffle=False, out_name=False)
+    # other_val_loader = get_dataloader('test', aug=False, shuffle=False, out_name=False)
+    # other_feature, other_outdict = extract_feature(other_train_loader, other_val_loader, model, '{}/{}/{}'.format(args.save_path, other_tag, args.enlarge), other_tag)
+
     results = meta_evaluate(out_dict, 1, train_feature, args)
     print_dict(results, 'Best 1-shot')
 
