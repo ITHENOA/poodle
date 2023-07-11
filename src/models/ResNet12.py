@@ -39,24 +39,19 @@ class BasicBlock(nn.Module):
         self.num_batches_tracked += 1
 
         residual = x
-
         out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
-
         out = self.conv2(out)
         out = self.bn2(out)
         out = self.relu(out)
-
         out = self.conv3(out)
         out = self.bn3(out)
-
         if self.downsample is not None:
             residual = self.downsample(x)
         out += residual
         out = self.relu(out)
         out = self.maxpool(out)
-
         if self.drop_rate > 0:
             if self.drop_block == True:
                 feat_size = out.size()[2]
@@ -74,7 +69,6 @@ class ResNet(nn.Module):
     def __init__(self, block=BasicBlock, keep_prob=1.0, avg_pool=True, drop_rate=0.1, dropblock_size=4, remove_linear=False, num_classes=1000):
         self.inplanes = 3
         super(ResNet, self).__init__()
-
         self.layer1 = self._make_layer(block, 64, stride=2, drop_rate=drop_rate)
         self.layer2 = self._make_layer(block, 160, stride=2, drop_rate=drop_rate)
         self.layer3 = self._make_layer(block, 320, stride=2, drop_rate=drop_rate, drop_block=True, block_size=dropblock_size)
@@ -85,21 +79,18 @@ class ResNet(nn.Module):
         self.keep_avg_pool = avg_pool
         self.dropout = nn.Dropout(p=1 - self.keep_prob, inplace=False)
         self.drop_rate = drop_rate
-        
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='leaky_relu')
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-
         self.further = ConvBlock(640 * block.expansion, 640 * block.expansion)
         self.fc2 = nn.Linear(640 * block.expansion, NUM_ROTATIONS)
         if remove_linear:
             self.fc = None
         else:
             self.fc = nn.Linear(640 * block.expansion, num_classes)
-            
     def _make_layer(self, block, planes, stride=1, drop_rate=0.0, drop_block=False, block_size=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:

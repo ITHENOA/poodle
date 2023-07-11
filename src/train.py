@@ -179,7 +179,7 @@ def main():
         
         for epoch in tqdm_loop:
             # train for one epoch
-            train_distil(train_loader, teacher, student, criterion, optimizer, epoch, scheduler, log)
+            train_distil(train_loader, teacher, student, criterion, optimizer, epoch, scheduler, log, n_generations)
             scheduler.step(epoch)
             # evaluate on meta validation set
             is_best = False
@@ -242,7 +242,7 @@ def meta_val(test_loader, model, train_mean=None):
                 tqdm_test_loader.set_description('Acc {:.2f}'.format(top1.avg * 100))
     return top1.avg
 
-def train_distil(train_loader, t_model, s_model, criterion, optimizer, epoch, scheduler, log):
+def train_distil(train_loader, t_model, s_model, criterion, optimizer, epoch, scheduler, log, n_generations):
     print("---- train246/ train_distil")
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -294,7 +294,7 @@ def train_distil(train_loader, t_model, s_model, criterion, optimizer, epoch, sc
         top1.update(prec1[0], input.size(0))
         top5.update(prec5[0], input.size(0))
         if not args.disable_tqdm:
-            tqdm_train_loader.set_description('[distil] [{}] Acc {:.2f}'.format(epoch,top1.avg))
+            tqdm_train_loader.set_description('[distil][{}] [{}] Acc {:.2f}'.format(n_generations, epoch, top1.avg))
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -333,10 +333,10 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
         if args.do_ssl:
             target, rot_target = target
             rot_target = rot_target.cuda(non_blocking=True)
+            
         if args.do_meta_train:
             target = torch.arange(args.meta_train_way)[:, None].repeat(1, args.meta_train_query).reshape(-1).long()
         target = target.cuda(non_blocking=True)
-
         # compute output
         r = np.random.rand(1)
         if args.beta > 0 and r < args.cutmix_prob:
@@ -363,7 +363,6 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, log):
                 query_proto = output[args.meta_train_shot * args.meta_train_way:]
                 shot_proto = shot_proto.reshape(args.meta_train_way, args.meta_train_shot, -1).mean(1)
                 output = -get_metric(args.meta_train_metric)(shot_proto, query_proto)
-        
         # measure accuracy and record loss
         losses.update(loss.item(), input.size(0))
 
