@@ -47,7 +47,7 @@ def parser_args():
                         help='number of iterations for meta test')
     parser.add_argument('--meta-val-iter', type=int, default=500,
                         help='number of iterations for meta val')
-    parser.add_argument('--meta-val-way', type=int, default=5,
+    parser.add_argument('--meta-val-way', type=int, default=5,          ## 
                         help='number of ways for meta val/test')
     parser.add_argument('--meta-val-shot', type=int, default=1,
                         help='number of shots for meta val/test')
@@ -60,7 +60,7 @@ def parser_args():
                         help='meta-val/test evaluate metric')
     parser.add_argument('--num_NN', type=int, default=1,
                         help='number of nearest neighbors, set this number >1 when do kNN')
-    parser.add_argument('--eval_fc', action='store_true',
+    parser.add_argument('--eval_fc', action='store_true',            ##
                         help='do evaluate with final fc layer.')
     ### meta train setting
     parser.add_argument('--do-meta-train', action='store_true',

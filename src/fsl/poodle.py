@@ -28,16 +28,32 @@ def poodle(gallery, query, support_label, test_label, shot, train_feature=None, 
     gallery = gallery.reshape(-1, shot, gallery.shape[-1]).mean(1) # (5, 1, D)
     if train_feature is not None:
         print(f"n_query{n_query} * n_tasks{n_tasks} * n_classes{n_classes} = {n_query * n_tasks * n_classes}")
-        neg_samples = np.random.randint(0, train_feature.shape[0], n_query * n_tasks * n_classes)
+        neg_samples = np.random.randint(0, train_feature.shape[0], 500000)
         neg_samples = train_feature[neg_samples]
+        print(neg_samples.shape)
+        # PLOT
+        # import matplotlib.pyplot as plt
+        # selected_images = neg_samples[:10]
+        # reshaped = selected_images.reshape(10,400000,640)
+        # fig, axs = plt.subplots(2, 5, figsize=(10, 4))
+        # for i, ax in enumerate(axs.flatten()):
+        #     ax.imshow(reshaped[i], cmap='gray')  # Assuming the images are grayscale
+        #     ax.axis('off')
+        # plt.tight_layout()
+        # plt.show()
+
+
 
     # prepare for training linear
     support = torch.tensor(instance_gallery, device='cuda:0').reshape(n_tasks, -1, feat_dim)
     gallery = torch.tensor(gallery, device='cuda:0').reshape(n_tasks, -1, feat_dim)
     query = torch.tensor(query, device='cuda:0').reshape(n_tasks, -1, feat_dim)
+    print(gallery.shape,support.shape,query.shape)
 
     if train_feature is not None:
         neg_samples = torch.tensor(neg_samples, device='cuda:0').reshape(n_tasks, -1, feat_dim)
+        print(neg_samples.shape)
+
 
     y_s = torch.tensor(support_label, device='cuda:0').reshape(n_tasks, -1)
     y_q = torch.tensor(test_label, device='cuda:0').reshape(n_tasks, -1)
