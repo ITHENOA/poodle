@@ -568,7 +568,7 @@ def do_extract_and_evaluate(model, log):
 
     
     # for neg sample ----------------------------------
-    other_tag="real"
+    other_tag="paint_bird"
     other_data_dir = "./data/" + other_tag
     other_split_dir = "./data/split/" + other_tag
     
@@ -583,8 +583,8 @@ def do_extract_and_evaluate(model, log):
     # print_dict(results, 'train=real - test=real - neg=real - Best 5-shot')
     
     # other neg
-    # results = meta_evaluate(out_dict, 1, other_train_feature, args)
-    # print_dict(results, 'train=real - test=real - neg=paint - Best 1-shot')
+    results = meta_evaluate(out_dict, 1, other_train_feature, args)
+    print_dict(results, 'train=real - test=real - neg=paint - Best 1-shot')
     results = meta_evaluate(out_dict, 5, other_train_feature, args)
     print_dict(results, 'train=real - test=real - neg=paint - Best 5-shot')
 
