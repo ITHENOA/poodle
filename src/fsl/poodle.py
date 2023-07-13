@@ -28,7 +28,7 @@ def poodle(gallery, query, support_label, test_label, shot, train_feature=None, 
     gallery = gallery.reshape(-1, shot, gallery.shape[-1]).mean(1) # (5, 1, D)
     if train_feature is not None:
         print(f"n_query{n_query} * n_tasks{n_tasks} * n_classes{n_classes} = {n_query * n_tasks * n_classes}")
-        neg_samples = np.random.randint(0, train_feature.shape[0], 500000)
+        neg_samples = np.random.randint(0, train_feature.shape[0], 200000)
         neg_samples = train_feature[neg_samples]
         print(neg_samples.shape)
         # PLOT
