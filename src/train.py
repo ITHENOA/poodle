@@ -535,12 +535,16 @@ def test_meta_evaluate(data_train, data_test, shot, train_feature, args):
         _, test_data, _, test_label = sample_case(args, data_test, shot) # use nonuniform_sample_case if non_uniform few-shot tasks
         super_tasks.append((train_data, test_data, train_label, test_label))
 
-    import numpy as np
-    for task in super_tasks:
-        print(np.shape(task[0]))
-        print(np.shape(task[1]))
-        print(np.shape(task[2]))
-        print(np.shape(task[3]))
+    # import numpy as np
+    # for task in super_tasks:
+    #     print("000000000")
+    #     print(np.shape(task[0]))
+    #     print("11111111111")
+    #     print(np.shape(task[1]))
+    #     print("2222222222222")
+    #     print(np.shape(task[2]))
+    #     print("333333333333")
+    #     print(np.shape(task[3]))
 
     super_train_data = np.stack([task[0] for task in super_tasks], 0)
     super_test_data = np.stack([task[1] for task in super_tasks], 0)
@@ -575,7 +579,7 @@ def do_extract_and_evaluate(model, log):
 
     
     # for neg sample ----------------------------------
-    other_tag="real"
+    other_tag="painting"
     other_data_dir = "./data/" + other_tag
     other_split_dir = "./data/split/" + other_tag
     
@@ -584,26 +588,30 @@ def do_extract_and_evaluate(model, log):
     other_train_feature, other_out_dict = extract_feature(other_train_loader, other_val_loader, model, '{}/{}/{}'.format(args.save_path, other_tag, args.enlarge), other_tag)
 
     # orginal    
-    results = meta_evaluate(out_dict, 1, train_feature, args)
-    print_dict(results, 'train=real - test=real - neg=real - Best 1-shot')
-    results = meta_evaluate(out_dict, 5, train_feature, args)
-    print_dict(results, 'train=real - test=real - neg=real - Best 5-shot')
+    # print("/////////////////// orginal //////////////////////")
+    # results = meta_evaluate(out_dict, 1, train_feature, args)
+    # print_dict(results, 'train=real - test=real - neg=real - Best 1-shot')
+    # results = meta_evaluate(out_dict, 5, train_feature, args)
+    # print_dict(results, 'train=real - test=real - neg=real - Best 5-shot')
     
-    # other neg
-    results = meta_evaluate(out_dict, 1, other_train_feature, args)
-    print_dict(results, 'train=real - test=real - neg=paint - Best 1-shot')
-    results = meta_evaluate(out_dict, 5, other_train_feature, args)
-    print_dict(results, 'train=real - test=real - neg=paint - Best 5-shot')
+    # # other neg
+    # print("/////////////////// other neg //////////////////////")
+    # results = meta_evaluate(out_dict, 1, other_train_feature, args)
+    # print_dict(results, 'train=real - test=real - neg=paint - Best 1-shot')
+    # results = meta_evaluate(out_dict, 5, other_train_feature, args)
+    # print_dict(results, 'train=real - test=real - neg=paint - Best 5-shot')
 
     # other test (neg train)
-    results = test_meta_evaluate(out_dict, other_out_dict, 1, train_feature, args)
-    print_dict(results, 'train=real - test=paint - neg=real - Best 1-shot')
+    print("/////////////////// other test (neg train) //////////////////////")
+    # results = test_meta_evaluate(out_dict, other_out_dict, 1, train_feature, args)
+    # print_dict(results, 'train=real - test=paint - neg=real - Best 1-shot')
     results = test_meta_evaluate(out_dict, other_out_dict, 5, train_feature, args)
     print_dict(results, 'train=real - test=paint - neg=real - Best 5-shot')
 
     # # test with paint : neg=paint
-    results = test_meta_evaluate(out_dict, other_out_dict, 1, other_train_feature, args)
-    print_dict(results, 'train=real - test=paint - neg=paint - Best 1-shot')
+    print("/////////////////// other test (neg test) //////////////////////")
+    # results = test_meta_evaluate(out_dict, other_out_dict, 1, other_train_feature, args)
+    # print_dict(results, 'train=real - test=paint - neg=paint - Best 1-shot')
     results = test_meta_evaluate(out_dict, other_out_dict, 5, other_train_feature, args)
     print_dict(results, 'train=real - test=paint - neg=paint - Best 5-shot')
 
